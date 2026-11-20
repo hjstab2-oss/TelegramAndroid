@@ -74,10 +74,21 @@ jobs:
           echo "ADDITIONAL_BUILD_NUMBER=$ADDITIONAL_BUILD_NUMBER" >> $vars
           echo "USER_REPO=$USER_REPO" >> $vars
           echo "CHECK_UPDATES=1" >> $vars
-          echo "USER_ID_OWNER=${{ secrets.USER_ID_OWNER }}" >> $vars
-          echo "UPDATE_CHANNEL_USERNAME=${{ secrets.UPDATE_CHANNEL_USERNAME }}" >> $vars
-          echo "LASTFM_API_KEY=${{ secrets.LASTFM_API_KEY }}" >> $vars
-          echo "LASTFM_API_SECRET=${{ secrets.LASTFM_API_SECRET }}" >> $vars
+          USER_ID_OWNER="${{ secrets.USER_ID_OWNER }}"
+          if [ -z "$USER_ID_OWNER" ]; then USER_ID_OWNER="0"; fi
+          echo "USER_ID_OWNER=$USER_ID_OWNER" >> $vars
+
+          UPDATE_CHANNEL_USERNAME="${{ secrets.UPDATE_CHANNEL_USERNAME }}"
+          if [ -z "$UPDATE_CHANNEL_USERNAME" ]; then UPDATE_CHANNEL_USERNAME="a"; fi
+          echo "UPDATE_CHANNEL_USERNAME=$UPDATE_CHANNEL_USERNAME" >> $vars
+
+          LASTFM_API_KEY="${{ secrets.LASTFM_API_KEY }}"
+          if [ -z "$LASTFM_API_KEY" ]; then LASTFM_API_KEY="a"; fi
+          echo "LASTFM_API_KEY=$LASTFM_API_KEY" >> $vars
+
+          LASTFM_API_SECRET="${{ secrets.LASTFM_API_SECRET }}"
+          if [ -z "$LASTFM_API_SECRET" ]; then LASTFM_API_SECRET="a"; fi
+          echo "LASTFM_API_SECRET=$LASTFM_API_SECRET" >> $vars
 
           ###
           echo $ADDITIONAL_BUILD_NUMBER
