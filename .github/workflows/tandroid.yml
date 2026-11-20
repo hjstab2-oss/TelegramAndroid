@@ -57,13 +57,15 @@ jobs:
           KEY_PASS="${{ secrets.ALIAS_PASS }}"
           KEY_ALIAS="${{ secrets.ALIAS_NAME }}"
           STORE_PASS="${{ secrets.KEYSTORE_PASS }}"
-          if [ -z "$KEY_PASS" ]; then KEY_PASS="android"; fi
-          if [ -z "$KEY_ALIAS" ]; then KEY_ALIAS="androidkey"; fi
-          if [ -z "$STORE_PASS" ]; then STORE_PASS="android"; fi
 
-          KEYSTORE_FILE="$PWD/TMessagesProj/config/release.keystore"
-          if [ ! -f "$KEYSTORE_FILE" ]; then
-            echo "Generating fallback keystore..."
+          if [ -n "$STORE_PASS" ] && [ -n "$KEY_PASS" ] && [ -n "$KEY_ALIAS" ]; then
+            KEYSTORE_FILE="$PWD/TMessagesProj/config/release.keystore"
+          else
+            KEY_PASS="android"
+            KEY_ALIAS="mersalkey"
+            STORE_PASS="android"
+            KEYSTORE_FILE="$PWD/TMessagesProj/config/mersal.keystore"
+            rm -f "$KEYSTORE_FILE"
             keytool -genkey -v -keystore "$KEYSTORE_FILE" -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -storepass "$STORE_PASS" -keypass "$KEY_PASS" -dname "CN=Mersal, OU=Client, O=Mersal, L=Unknown, S=Unknown, C=XX"
           fi
 
