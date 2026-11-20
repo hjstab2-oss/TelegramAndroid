@@ -29675,8 +29675,8 @@ public class ChatActivity extends BaseFragment implements
                     if (bottomChannelButtonsLayout != null) {
                         bottomChannelButtonsLayout.setVisibility(View.GONE);
                     }
-                    if (bottomOverlayChat != null) {
-                        bottomOverlayChat.setVisibility(View.GONE);
+                    if (bottomOverlay != null) {
+                        bottomOverlay.setVisibility(View.GONE);
                     }
                     Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
                     finishFragment();
