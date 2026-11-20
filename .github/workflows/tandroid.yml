@@ -1,9 +1,10 @@
-name: Fork Client
+name: Mersal Client
 
 on:
   push:
     branches:
       - '**'
+  workflow_dispatch:
 
 jobs:
   linux:
@@ -14,7 +15,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Free up some disk space.
@@ -49,12 +50,27 @@ jobs:
 
           echo "DUMMY_CONST=0" >> $vars
           echo "org.gradle.workers.max=1" >> $vars
+
           echo "APP_ID=${{ secrets.APP_ID }}" >> $vars
           echo "APP_HASH=${{ secrets.APP_HASH }}" >> $vars
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.ALIAS_PASS }}" >> $vars
-          echo "RELEASE_KEY_ALIAS=${{ secrets.ALIAS_NAME }}" >> $vars
-          echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASS }}" >> $vars
-          echo "RELEASE_KEYSTORE_FILE=$PWD/TMessagesProj/config/release.keystore" >> $vars
+
+          KEY_PASS="${{ secrets.ALIAS_PASS }}"
+          KEY_ALIAS="${{ secrets.ALIAS_NAME }}"
+          STORE_PASS="${{ secrets.KEYSTORE_PASS }}"
+          if [ -z "$KEY_PASS" ]; then KEY_PASS="android"; fi
+          if [ -z "$KEY_ALIAS" ]; then KEY_ALIAS="androidkey"; fi
+          if [ -z "$STORE_PASS" ]; then STORE_PASS="android"; fi
+
+          KEYSTORE_FILE="$PWD/TMessagesProj/config/release.keystore"
+          if [ ! -f "$KEYSTORE_FILE" ]; then
+            echo "Generating fallback keystore..."
+            keytool -genkey -v -keystore "$KEYSTORE_FILE" -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -storepass "$STORE_PASS" -keypass "$KEY_PASS" -dname "CN=Mersal, OU=Client, O=Mersal, L=Unknown, S=Unknown, C=XX"
+          fi
+
+          echo "RELEASE_KEY_PASSWORD=$KEY_PASS" >> $vars
+          echo "RELEASE_KEY_ALIAS=$KEY_ALIAS" >> $vars
+          echo "RELEASE_STORE_PASSWORD=$STORE_PASS" >> $vars
+          echo "RELEASE_KEYSTORE_FILE=$KEYSTORE_FILE" >> $vars
           echo "ADDITIONAL_BUILD_NUMBER=$ADDITIONAL_BUILD_NUMBER" >> $vars
           echo "USER_REPO=$USER_REPO" >> $vars
           echo "CHECK_UPDATES=1" >> $vars
@@ -69,16 +85,23 @@ jobs:
           sudo apt -y install ninja-build meson nasm gperf pkg-config unzip pip
           rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
           rustup toolchain install 1.96.1 -t aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
-          ./gradlew :TMessagesProj_App:assembleAfatRelease
+          ./gradlew :TMessagesProj_App:assembleAfatFd_v8aRelease || ./gradlew :TMessagesProj_App:assembleAfatRelease
 
-          #grep BUILD_VERSION_STRING TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java | cut -d'"' -f 2 > ver.txt
-          grep VERSION_NAME TMessagesProj/build/generated/source/buildConfig/release/org/telegram/messenger/BuildConfig.java | cut -d'"' -f 2 > ver.txt
+          ver="1.0.0"
+          if [ -f TMessagesProj/build/generated/source/buildConfig/release/org/telegram/messenger/BuildConfig.java ]; then
+            ver=$(grep VERSION_NAME TMessagesProj/build/generated/source/buildConfig/release/org/telegram/messenger/BuildConfig.java | cut -d'"' -f 2 || echo "1.0.0")
+          fi
+          echo "$ver" > ver.txt
 
           mkdir -p artifact
-          mv TMessagesProj_App/build/outputs/apk/afat/release/app.apk app.apk
-          cp app.apk "artifact/ForkClient $(cat ver.txt).apk"
           mkdir -p tag_asset
-          cp app.apk "tag_asset/ForkClient_$(cat ver.txt).apk"
+
+          apk_file=$(find TMessagesProj_App/build/outputs/apk -name "*.apk" | head -1)
+          if [ -n "$apk_file" ]; then
+            cp "$apk_file" app.apk
+            cp "$apk_file" "artifact/Mersal_$(cat ver.txt)_arm64-v8a.apk"
+            cp "$apk_file" "tag_asset/Mersal_$(cat ver.txt)_arm64-v8a.apk"
+          fi
 
           # Upload to channel.
           if [[ "${{ contains(github.event.head_commit.message, '[Release]') }}" == "true" ]]; then
@@ -88,7 +111,7 @@ jobs:
           else
             FORK_UPLOAD_MODE=
           fi
-          if [[ -n "$FORK_UPLOAD_MODE" ]]; then
+          if [[ -n "$FORK_UPLOAD_MODE" ]] && [[ -n "${{ secrets.BASE64_ZIP }}" ]]; then
             set +x
             pip install requests tgcrypto-pyrofork Kurigram
             cp app.apk "ForkClient $(cat ver.txt).apk"
@@ -98,7 +121,7 @@ jobs:
             FORK_UPLOAD_MODE=$FORK_UPLOAD_MODE python3 upload.py
             set -x
           else
-            echo "Skipping channel upload (no [Release] or [Optional] marker in commit message)."
+            echo "Skipping channel upload."
           fi
           ###
 
@@ -113,12 +136,12 @@ jobs:
         with:
           subject-path: 'artifact/*.apk'
 
-      - uses: actions/upload-artifact@master
-        name: Upload artifact
-        if: ${{ contains(github.event.head_commit.message, '[Release]') }}
+      - uses: actions/upload-artifact@v4
+        name: Upload APK Artifact
         with:
-          name: ForkClient
-          path: artifact/
+          name: Mersal-arm64-v8a-apk
+          path: artifact/*.apk
+          if-no-files-found: warn
 
   release:
     name: Create Release.
@@ -126,24 +149,24 @@ jobs:
     if: ${{ contains(github.event.head_commit.message, '[Release]') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4
       - name: Download artifact
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@v4
         with:
-          name: ForkClient
+          name: Mersal-arm64-v8a-apk
           path: asset
       - name: Get version info
         run: |
-          find asset -name "*.apk" | head -1 | sed 's/.*ForkClient //;s/\.apk//' > version.txt
+          find asset -name "*.apk" | head -1 | sed 's/.*Mersal_//;s/_arm64-v8a\.apk//' > version.txt
           echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
           echo "OFFICIAL_VERSION=$(cat version.txt | sed 's/..$//')" >> $GITHUB_ENV
       - name: Create Release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN || secrets.GITHUB_TOKEN }}
         with:
           draft: true
           files: asset/*
           tag_name: ${{ env.VERSION }}
-          name: "ForkClient ${{ env.VERSION }}"
-          body: "— Updated to ${{ env.OFFICIAL_VERSION }} build of the official Telegram."
+          name: "Mersal ${{ env.VERSION }}"
+          body: "Mersal Client build."

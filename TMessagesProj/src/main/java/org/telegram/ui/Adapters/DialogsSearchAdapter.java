@@ -354,6 +354,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
             }
         });
         searchAdapterHelper.setAllowGlobalResults(allowGlobalSearch);
+        searchAdapterHelper.setAllowGlobalResults(false);
         mContext = context;
         needMessagesSearch = messagesSearch;
         dialogsType = type;
@@ -467,6 +468,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         for (int a = 0; a < res.messages.size(); a++) {
                             TLRPC.Message message = res.messages.get(a);
                             long did = MessageObject.getDialogId(message);
+                            if (!MessagesController.getInstance(currentAccount).isAllowedLocalDialog(did)) {
+                                continue;
+                            }
                             int maxId = MessagesController.getInstance(currentAccount).deletedHistory.get(did);
                             if (maxId != 0 && message.id <= maxId) {
                                 continue;
@@ -625,6 +629,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         for (int a = 0; a < res.messages.size(); a++) {
                             TLRPC.Message message = res.messages.get(a);
                             long did = MessageObject.getDialogId(message);
+                            if (!MessagesController.getInstance(currentAccount).isAllowedLocalDialog(did)) {
+                                continue;
+                            }
                             int maxId = MessagesController.getInstance(currentAccount).deletedHistory.get(did);
                             if (maxId != 0 && message.id <= maxId) {
                                 continue;
@@ -1341,6 +1348,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         }
                     }));
                 }, 300);
+                publicPostsTotalCount = 0;
+                publicPosts.clear();
             }
         }
     }

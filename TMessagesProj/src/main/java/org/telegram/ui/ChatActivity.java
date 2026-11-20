@@ -2941,6 +2941,11 @@ public class ChatActivity extends BaseFragment implements
                     FileLog.e(e);
                 }
                 if (currentChat != null) {
+                    if ((currentChat.left || ChatObject.isNotInChat(currentChat)) && !isThreadChat() && !isInScheduleMode()) {
+                        Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                        finishFragment();
+                        return false;
+                    }
                     getMessagesController().putChat(currentChat, true);
                 } else {
                     return false;
@@ -29666,6 +29671,17 @@ public class ChatActivity extends BaseFragment implements
             long requestedTime = MessagesController.getNotificationsSettings(currentAccount).getLong("dialog_join_requested_time_" + dialog_id, -1);
             boolean shouldApply = false;
             if (ChatObject.isChannel(currentChat) && !(currentChat instanceof TLRPC.TL_channelForbidden)) {
+                if ((currentChat.left || ChatObject.isNotInChat(currentChat)) && !isThreadChat() && !isInScheduleMode()) {
+                    if (bottomChannelButtonsLayout != null) {
+                        bottomChannelButtonsLayout.setVisibility(View.GONE);
+                    }
+                    if (bottomOverlayChat != null) {
+                        bottomOverlayChat.setVisibility(View.GONE);
+                    }
+                    Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                    finishFragment();
+                    return;
+                }
                 if (ChatObject.isNotInChat(currentChat) && !UserObject.isBotForum(currentUser) && (ChatObject.isForum(currentChat) || !isThreadChat() || currentChat.join_to_send)) {
                     if (getMessagesController().isJoiningChannel(currentChat.id)) {
                         showBottomOverlayProgress(true, false);
@@ -38350,6 +38366,10 @@ public class ChatActivity extends BaseFragment implements
             }
         } else {
             logSponsoredClicked(messageObject, false, false);
+            if (isProxyUrl(str)) {
+                Browser.openUrl(getParentActivity(), str);
+                return;
+            }
             String username = Browser.extractUsername(str);
             if (username != null) {
                 username = username.toLowerCase();
@@ -38379,6 +38399,15 @@ public class ChatActivity extends BaseFragment implements
                 processExternalUrl(0, str, url, cell, false, false);
             }
         }
+    }
+
+    public static boolean isProxyUrl(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase();
+        return lower.startsWith("tg://proxy") || lower.startsWith("tg:proxy") ||
+               lower.startsWith("tg://socks") || lower.startsWith("tg:socks") ||
+               lower.startsWith("tg://webproxy") || lower.startsWith("tg:webproxy") ||
+               lower.contains("t.me/proxy") || lower.contains("t.me/socks") || lower.contains("t.me/webproxy");
     }
 
     public void shakeContent() {
@@ -38661,6 +38690,13 @@ public class ChatActivity extends BaseFragment implements
         } else if (url instanceof URLSpanUserMention) {
             TLRPC.User user = getMessagesController().getUser(Utilities.parseLong(((URLSpanUserMention) url).getURL()));
             if (user != null) {
+                if (!getMessagesController().isAllowedLocalDialog(user.id)) {
+                    Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                    if (longPress && cell != null) {
+                        cell.resetPressedLink(-1);
+                    }
+                    return;
+                }
                 MessagesController.getInstance(currentAccount).openChatOrProfileWith(user, null, ChatActivity.this, 0, false);
             }
             if (longPress && cell != null) {
@@ -38764,6 +38800,10 @@ public class ChatActivity extends BaseFragment implements
                 }
             } else {
                 logSponsoredClicked(messageObject, false, false);
+                if (isProxyUrl(urlFinal)) {
+                    Browser.openUrl(getParentActivity(), urlFinal);
+                    return;
+                }
                 if (Browser.isGetPremiumUrl(urlFinal)) {
                     Browser.openUrl(getParentActivity(), urlFinal.contains("://") ? urlFinal : "https://" + urlFinal);
                     return;
@@ -41500,6 +41540,10 @@ public class ChatActivity extends BaseFragment implements
             if (chat == null) {
                 return;
             }
+            if (!getMessagesController().isAllowedLocalDialog(-chat.id)) {
+                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (actionBar.isActionModeShowed() || isReport()) {
                 processRowSelect(cell, true, touchX, touchY);
                 return;
@@ -41760,6 +41804,10 @@ public class ChatActivity extends BaseFragment implements
                 processRowSelect(cell, true, touchX, touchY);
                 return;
             }
+            if (user != null && asForward && !getMessagesController().isAllowedLocalDialog(user.id)) {
+                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (cell != null && cell.getMessageObject() != null && cell.getMessageObject().isSponsored()) {
                 didPressInstantButton(cell, 10);
                 return;
@@ -41966,6 +42014,10 @@ public class ChatActivity extends BaseFragment implements
         private void openProfile(TLRPC.User user, boolean expandPhoto) {
             if (user != null) {
                 if (user.id == UserObject.VERIFY) return;
+                if (!getMessagesController().isAllowedLocalDialog(user.id)) {
+                    Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (user.photo == null || user.photo instanceof TLRPC.TL_userProfilePhotoEmpty) {
                     expandPhoto = false;
                 }
@@ -41985,6 +42037,10 @@ public class ChatActivity extends BaseFragment implements
 
         private void openProfile(TLRPC.Chat chat, boolean expandPhoto) {
             if (chat != null) {
+                if (!getMessagesController().isAllowedLocalDialog(-chat.id)) {
+                    Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Bundle args = new Bundle();
                 args.putLong("chat_id", chat.id);
                 args.putBoolean("expandPhoto", expandPhoto);
@@ -42003,6 +42059,10 @@ public class ChatActivity extends BaseFragment implements
         }
 
         private void openChat(ChatMessageCell cell, TLRPC.Chat chat, int postId, boolean asForward) {
+            if (chat != null && !getMessagesController().isAllowedLocalDialog(-chat.id)) {
+                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (currentChat != null && chat.id == currentChat.id) {
                 if (avatarContainer != null && postId == 0) {
                     avatarContainer.openProfile(false);

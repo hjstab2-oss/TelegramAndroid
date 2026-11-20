@@ -4868,6 +4868,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             });
                             presentFragment(fragment);
                         } else {
+                            if (peerId != null && !MessagesController.getInstance(intentAccount).isAllowedLocalDialog(peerId)) {
+                                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                                try {
+                                    dismissLoading.run();
+                                } catch (Exception e) {
+                                    FileLog.e(e);
+                                }
+                                return;
+                            }
                             long dialog_id;
                             boolean isBot = false;
                             final Bundle args = new Bundle();
@@ -5134,6 +5143,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     if (!LaunchActivity.this.isFinishing()) {
                         boolean hideProgressDialog = true;
                         if (error == null && actionBarLayout != null) {
+                            if (!(response instanceof TLRPC.TL_chatInviteAlready)) {
+                                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                                try {
+                                    dismissLoading.run();
+                                } catch (Exception e) {
+                                    FileLog.e(e);
+                                }
+                                return;
+                            }
                             TLRPC.ChatInvite invite = (TLRPC.ChatInvite) response;
                             if (invite.chat != null && (!ChatObject.isLeftFromChat(invite.chat) || !invite.chat.kicked && (ChatObject.isPublic(invite.chat) || invite instanceof TLRPC.TL_chatInvitePeek || invite.chat.has_geo))) {
                                 MessagesController.getInstance(intentAccount).putChat(invite.chat, false);
@@ -5565,6 +5583,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 }
             }));
         } else if (channelId != null && (messageId != null || isBoost)) {
+            if (!MessagesController.getInstance(intentAccount).isAllowedLocalDialog(-channelId)) {
+                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+                try {
+                    dismissLoading.run();
+                } catch (Exception e) {
+                    FileLog.e(e);
+                }
+                return;
+            }
             if (threadId != null) {
                 TLRPC.Chat chat = MessagesController.getInstance(intentAccount).getChat(channelId);
                 if (chat != null) {

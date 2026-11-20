@@ -42,6 +42,7 @@ import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 import android.view.Gravity;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22269,6 +22270,39 @@ public class MessagesController extends BaseController implements NotificationCe
         return dialogs_dict.get(did);
     }
 
+    public static void showRestrictedToast() {
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                Toast.makeText(ApplicationLoader.applicationContext, "الوصول محصور بالاشتراكات وجهات الاتصال الحالية فقط", Toast.LENGTH_SHORT).show();
+            } catch (Exception ignore) {}
+        });
+    }
+
+    public boolean isAllowedLocalDialog(long dialogId) {
+        if (dialogId == getUserConfig().getClientUserId()) {
+            return true; // Saved Messages
+        }
+        if (getDialog(dialogId) != null) {
+            if (dialogId < 0) {
+                TLRPC.Chat chat = getChat(-dialogId);
+                if (chat != null && (chat.left || ChatObject.isNotInChat(chat))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (dialogId < 0) {
+            TLRPC.Chat chat = getChat(-dialogId);
+            if (chat != null && !chat.left && !ChatObject.isNotInChat(chat)) {
+                return true;
+            }
+        }
+        if (dialogId > 0 && getContactsController().isContact(dialogId)) {
+            return true;
+        }
+        return false;
+    }
+
     public void addDialogAction(long did, boolean clean) {
         TLRPC.Dialog dialog = dialogs_dict.get(did);
         if (dialog == null) {
@@ -22947,6 +22981,10 @@ public class MessagesController extends BaseController implements NotificationCe
             dialogId = -chatId;
             chat = getChat(chatId);
         }
+        if (dialogId != 0 && !isAllowedLocalDialog(dialogId)) {
+            showRestrictedToast();
+            return false;
+        }
         if (user == null && chat == null) {
             return true;
         }
@@ -23046,6 +23084,11 @@ public class MessagesController extends BaseController implements NotificationCe
         if (user == null && chat == null || fragment == null) {
             return;
         }
+        long dialogId = chat != null ? -chat.id : (user != null ? user.id : 0);
+        if (dialogId != 0 && !isAllowedLocalDialog(dialogId)) {
+            showRestrictedToast();
+            return;
+        }
         String reason;
         if (chat != null) {
             reason = getRestrictionReason(chat.restriction_reason);
@@ -23114,8 +23157,16 @@ public class MessagesController extends BaseController implements NotificationCe
             }
         }
         if (user != null) {
+            if (!isAllowedLocalDialog(user.id)) {
+                showRestrictedToast();
+                return;
+            }
             openChatOrProfileWith(user, null, fragment, type, false);
         } else if (chat != null) {
+            if (!isAllowedLocalDialog(-chat.id)) {
+                showRestrictedToast();
+                return;
+            }
             openChatOrProfileWith(null, chat, fragment, 1, false);
         } else {
             if (fragment.getParentActivity() == null) {
@@ -23139,6 +23190,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     return;
                 }
                 if (peerId != null) {
+                    if (!isAllowedLocalDialog(peerId)) {
+                        showRestrictedToast();
+                        return;
+                    }
                     if (peerId < 0) {
                         openChatOrProfileWith(null, getChat(-peerId), fragment, 1, false);
                     } else {
@@ -23925,82 +23980,21 @@ public class MessagesController extends BaseController implements NotificationCe
         public int more;
 
         public static boolean hasRecommendations(ChannelRecommendations rec) {
-            return rec != null && !rec.chats.isEmpty();
+            return false;
         }
 
         public static boolean hasRecommendations(int currentAccount, long dialogId) {
-            return hasRecommendations(MessagesController.getInstance(currentAccount).getChannelRecommendations(dialogId));
+            return false;
         }
     }
 
     private HashMap<Long, ChannelRecommendations> cachedChannelRecommendations;
     public ChannelRecommendations getCachedChannelRecommendations(long dialogId) {
-        if (cachedChannelRecommendations == null) {
-            return null;
-        }
-        return cachedChannelRecommendations.get(dialogId);
+        return null;
     }
 
     public ChannelRecommendations getChannelRecommendations(long dialogId) {
-        if (cachedChannelRecommendations == null) {
-            cachedChannelRecommendations = new HashMap<>();
-        }
-        final boolean isPremium = getUserConfig().isPremium();
-        ChannelRecommendations rec = null;
-        if (cachedChannelRecommendations.containsKey(dialogId)) {
-            rec = cachedChannelRecommendations.get(dialogId);
-            if (rec == null || rec.wasPremium == isPremium) {
-                return rec;
-            }
-        }
-        TLObject req;
-        if (dialogId > 0) {
-            TL_bots.getBotRecommendations r = new TL_bots.getBotRecommendations();
-            r.bot = getInputUser(dialogId);
-            if (r.bot == null) return null;
-            req = r;
-        } else {
-            TLRPC.TL_channels_getChannelRecommendations r = new TLRPC.TL_channels_getChannelRecommendations();
-            if (dialogId != 0) {
-                r.flags |= 1;
-                r.channel = getInputChannel(-dialogId);
-                if (r.channel == null) return null;
-            }
-            req = r;
-        }
-        cachedChannelRecommendations.put(dialogId, null);
-        getConnectionsManager().sendRequest(req, (res, err) -> AndroidUtilities.runOnUIThread(() -> {
-            if (res instanceof TLRPC.messages_Chats) {
-                ArrayList<TLRPC.Chat> chats = ((TLRPC.messages_Chats) res).chats;
-                putChats(chats, false);
-
-                ChannelRecommendations newrec = new ChannelRecommendations();
-                newrec.wasPremium = isPremium;
-                newrec.chats.addAll(chats);
-                if (res instanceof TLRPC.TL_messages_chatsSlice) {
-                    newrec.more = Math.max(0, ((TLRPC.TL_messages_chatsSlice) res).count - chats.size());
-                } else if (!getUserConfig().isPremium() && BuildVars.DEBUG_PRIVATE_VERSION) {
-                    newrec.more = 90;
-                }
-                cachedChannelRecommendations.put(dialogId, newrec);
-                getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, dialogId);
-            } else if (res instanceof TLRPC.Users) {
-                ArrayList<TLRPC.User> users = ((TLRPC.Users) res).users;
-                putUsers(users, false);
-
-                ChannelRecommendations newrec = new ChannelRecommendations();
-                newrec.wasPremium = isPremium;
-                newrec.chats.addAll(users);
-                if (res instanceof TLRPC.TL_usersSlice) {
-                    newrec.more = Math.max(0, ((TLRPC.TL_usersSlice) res).count - users.size());
-                } else if (!getUserConfig().isPremium() && BuildVars.DEBUG_PRIVATE_VERSION) {
-                    newrec.more = 90;
-                }
-                cachedChannelRecommendations.put(dialogId, newrec);
-                getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, dialogId);
-            }
-        }));
-        return rec;
+        return null;
     }
 
     private HashSet<Long> loadingReactionTags;

@@ -1536,12 +1536,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
                 return;
             }
 
-            if (expandedPublicPosts) {
-                items.add(new Item(PUBLIC_POSTS_TYPE));
-            }
-            items.add(new Item(CHANNELS_TYPE));
-            items.add(new Item(BOTS_TYPE));
-            items.add(new Item(POSTS_TYPE));
+            // External discovery tabs (Channels, Apps, Posts, Public Posts) removed for strict closed ecosystem
             if (!showOnlyDialogsAdapter) {
                 Item item = new Item(FILTER_TYPE);
                 item.filterIndex = 0;

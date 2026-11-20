@@ -117,7 +117,15 @@ public class SearchAdapterHelper {
             ConnectionsManager.getInstance(currentAccount).cancelRequest(reqId, true);
         }
         pendingRequestIds.clear();
-        if (query == null) {
+
+        // STRICT CLOSED ECOSYSTEM: Completely disable global search and external discovery
+        globalSearch.clear();
+        globalSearchMap.clear();
+        localServerSearch.clear();
+        phonesSearch.clear();
+        phoneSearchMap.clear();
+
+        if (query == null || channelId == 0 || !MessagesController.getInstance(currentAccount).isAllowedLocalDialog(-channelId)) {
             groupSearch.clear();
             groupSearchMap.clear();
             globalSearch.clear();
@@ -126,6 +134,12 @@ public class SearchAdapterHelper {
             phonesSearch.clear();
             phoneSearchMap.clear();
             delegate.onDataSetChanged(searchId);
+            if (delegate != null) {
+                delegate.onDataSetChanged(searchId);
+            }
+            if (onEnd != null) {
+                onEnd.run();
+            }
             return;
         }
 
@@ -274,6 +288,10 @@ public class SearchAdapterHelper {
                 localServerSearch.clear();
                 hasChanged = false;
             }
+            globalSearch.clear();
+            globalSearchMap.clear();
+            localServerSearch.clear();
+            hasChanged = false;
         }
         if (!canAddGroupsOnly && phoneNumbers && query.startsWith("+") && query.length() > 3) {
             phonesSearch.clear();

@@ -69,7 +69,7 @@
     <string name="QRLoginStep3">وجّه هاتفك نحو هذه الشاشة لتأكيد تسجيل الدخول</string>
     <string name="QRLoginSubtitle">افتح تيليجرام على جهاز آخر وامسح رمز QR هذا لتسجيل الدخول إلى حسابك.</string>
     <string name="QRLoginTitle">تسجيل الدخول عبر رمز QR</string>
-    <string name="AppNameFdroid">Forkgram</string>
+    <string name="AppNameFdroid">مرسال</string>
     <string name="GoToTags">دردشات GoTo: %1$s</string>
     <string name="GoToNotFound">لم يتم العثور على دردشة GoTo لـ #%1$s (%2$s)</string>
     <string name="GoToAmbiguous">الوسم #%1$s يطابق عدة دردشات: %2$s</string>
@@ -272,8 +272,8 @@
     <string name="LinkReplacementInvalid">تعبير غير صالح</string>
     <string name="LinkReplacedOnPaste">تم استبدال الرابط</string>
 
-    <string name="AppName">Fork Client</string>
-    <string name="AppNameBeta">Fork Client</string>
+    <string name="AppName">مرسال</string>
+    <string name="AppNameBeta">مرسال</string>
     <string name="LanguageName">العربية</string>
     <string name="English">الإنجليزية</string>
     <string name="LanguageNameInEnglish">Arabic</string>
