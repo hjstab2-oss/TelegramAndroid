@@ -5902,77 +5902,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         String referrer,
         boolean openDirect
     ) {
-        final TLRPC.TL_inputBotAppShortName app = new TLRPC.TL_inputBotAppShortName();
-        app.bot_id = MessagesController.getInstance(intentAccount).getInputUser(user);
-        app.short_name = botAppMaybe;
-        getBotApp.app = app;
-        ConnectionsManager.getInstance(intentAccount).sendRequest(getBotApp, (response1, error1) -> {
-            if (progress != null) {
-                progress.end();
-            }
-            if (error1 != null) {
-                AndroidUtilities.runOnUIThread(() -> runLinkRequest(intentAccount, username, group, sticker, emoji, botUser, botChat, botChannel, botChatAdminParams, message, contactToken, folderSlug, text, hasUrl, messageId, channelId, threadId, commentId, game, auth, lang, unsupportedUrl, code, loginToken, wallPaper, inputInvoiceSlug, uniqueGiftSlug, theme, voicechat, videochat, livestream, state, videoTimestamp, setAsAttachBot, attachMenuBotToOpen, attachMenuBotChoose, null, null, progress, forceNotInternalForApps, storyId, liveStory, storyAlbumId, giftCollectionId, null, null, isBoost, chatLinkSlug, botCompact, botFullscreen, openedTelegram, openProfile, forceRequest, referrer, null, openDirect, null));
-            } else {
-                TLRPC.TL_messages_botApp botApp = (TLRPC.TL_messages_botApp) response1;
-                AndroidUtilities.runOnUIThread(() -> {
-                    dismissLoading.run();
-
-                    AtomicBoolean allowWrite = new AtomicBoolean();
-                    BaseFragment lastFragment = mainFragmentsStack == null || mainFragmentsStack.isEmpty() ? null : mainFragmentsStack.get(mainFragmentsStack.size() - 1);
-                    Runnable loadBotSheet = () -> {
-                        if (lastFragment == null || !isActive || isFinishing() || isDestroyed()) return;
-                        WebViewRequestProps props = WebViewRequestProps.of(intentAccount, user.id, user.id, null, null, BotWebViewAttachedSheet.TYPE_WEB_VIEW_BOT_APP, 0, 0L, false, botApp.app, allowWrite.get(), botAppStartParam, user, 0, botCompact, botFullscreen);
-                        if (getBottomSheetTabs() != null && getBottomSheetTabs().tryReopenTab(props) != null) {
-                            return;
-                        }
-                        SharedPrefsHelper.setWebViewConfirmShown(currentAccount, user.id, true);
-//                        if (AndroidUtilities.isTablet() || true) {
-                            BotWebViewSheet sheet = new BotWebViewSheet(LaunchActivity.this, lastFragment != null ? lastFragment.getResourceProvider() : null);
-                            sheet.setWasOpenedByLinkIntent(openedTelegram);
-                            sheet.setDefaultFullsize(!botCompact);
-                            if (botFullscreen) {
-                                sheet.setFullscreen(true, false);
-                            }
-                            sheet.setNeedsContext(false);
-                            sheet.setParentActivity(LaunchActivity.this);
-                            sheet.requestWebView(lastFragment, props);
-                            sheet.show();
-                            if (botApp.inactive || forceNotInternalForApps) {
-                                sheet.showJustAddedBulletin();
-                            }
-//                        } else {
-//                            BaseFragment fragment = lastFragment;
-//                            if (fragment.getParentLayout() instanceof ActionBarLayout) {
-//                                fragment = ((ActionBarLayout) fragment.getParentLayout()).getSheetFragment();
-//                            }
-//                            BotWebViewAttachedSheet sheet = fragment.createBotViewer();
-//                            sheet.setWasOpenedByLinkIntent(openedTelegram);
-//                            sheet.setDefaultFullsize(!botCompact);
-//                            sheet.setNeedsContext(false);
-//                            sheet.setParentActivity(LaunchActivity.this);
-//                            sheet.requestWebView(fragment, props);
-//                            sheet.show();
-//                            if (botApp.inactive || forceNotInternalForApps) {
-//                                sheet.showJustAddedBulletin();
-//                            }
-//                        }
-                    };
-
-                    if (ignoreInactive) {
-                        loadBotSheet.run();
-                    } else if (botApp.inactive && botAttachable) {
-                        WebAppDisclaimerAlert.show(this, (allowSendMessage) -> {
-                            loadBotSheet.run();
-                        }, null, progress != null ? progress::end : null);
-                    } else if (botApp.request_write_access || forceNotInternalForApps) {
-                        AlertsCreator.createBotLaunchAlert(lastFragment, allowWrite, user, loadBotSheet);
-                    } else {
-                        loadBotSheet.run();
-                    }
-                });
-            }
-        });
-
+        MersalConfig.showBlockedMiniAppToast();
+        if (progress != null) {
+            progress.end();
+        }
+        if (dismissLoading != null) {
+            try {
+                dismissLoading.run();
+            } catch (Exception ignore) {}
+        }
+        return;
     }
 
     private void processAttachedMenuBotFromShortcut(long botId) {

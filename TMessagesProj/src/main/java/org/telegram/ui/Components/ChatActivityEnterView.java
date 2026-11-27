@@ -11486,12 +11486,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             ) &&
             parentFragment != null && parentFragment.getChatMode() == 0;
 
-        visible = false;
-        if (!visible && birthdayHint != null) {
+        if (birthdayHint != null) {
             birthdayHint.hide();
-        }
-        if (!visible && giftButton == null) {
-            return;
         }
         if (giftButton != null) {
             giftButton.setVisibility(GONE);
