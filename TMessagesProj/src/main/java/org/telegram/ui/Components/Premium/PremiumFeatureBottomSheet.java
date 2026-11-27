@@ -59,6 +59,7 @@ import org.telegram.ui.bots.AffiliateProgramFragment;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import org.telegram.messenger.MersalConfig;
 
 public class PremiumFeatureBottomSheet extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
 
@@ -584,8 +585,8 @@ public class PremiumFeatureBottomSheet extends BottomSheet implements Notificati
 
     @Override
     public void show() {
-        super.show();
-        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 16);
+        // Mersal: suppress Premium upsell sheets
+        return;
     }
 
     @Override

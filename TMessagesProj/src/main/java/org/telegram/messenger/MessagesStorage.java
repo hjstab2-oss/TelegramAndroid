@@ -15508,6 +15508,43 @@ public class MessagesStorage extends BaseController {
         executeInStorageQueue(() -> updateDialogsWithDeletedMessagesInternal(dialogId, channelId, messages, additionalDialogsToUpdate));
     }
 
+    public void markMessagesAsAntiDeleted(long dialogId, ArrayList<Integer> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+        storageQueue.postRunnable(() -> {
+            if (dialogId != 0) {
+                MersalAntiDeleteHelper.markDeleted(dialogId, messages);
+                return;
+            }
+            SQLiteCursor cursor = null;
+            try {
+                String ids = TextUtils.join(",", messages);
+                cursor = database.queryFinalized(String.format(Locale.US, "SELECT uid, mid FROM messages_v2 WHERE mid IN(%s) AND is_channel = 0", ids));
+                LongSparseArray<ArrayList<Integer>> byDialog = new LongSparseArray<>();
+                while (cursor.next()) {
+                    long uid = cursor.longValue(0);
+                    int mid = cursor.intValue(1);
+                    ArrayList<Integer> list = byDialog.get(uid);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        byDialog.put(uid, list);
+                    }
+                    list.add(mid);
+                }
+                for (int a = 0; a < byDialog.size(); a++) {
+                    MersalAntiDeleteHelper.markDeleted(byDialog.keyAt(a), byDialog.valueAt(a));
+                }
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (cursor != null) {
+                    cursor.dispose();
+                }
+            }
+        });
+    }
+
     public ArrayList<Long> markMessagesAsDeleted(long dialogId, ArrayList<Integer> messages, boolean useQueue, boolean deleteFiles, int mode, int topicId) {
         if (messages.isEmpty()) {
             return null;

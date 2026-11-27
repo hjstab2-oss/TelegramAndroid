@@ -118,6 +118,9 @@ import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MersalAntiDeleteHelper;
+import org.telegram.messenger.MersalConfig;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.FlagSecureReason;
 import org.telegram.messenger.ImageLoader;
@@ -15714,6 +15717,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             } else {
                 currentTimeString = TextUtils.concat(formatString(R.string.MessageScheduledRepeatSeconds, period), ", ", currentTimeString);
             }
+        }
+        if (MersalConfig.isAntiDeleteEnabled() && currentMessageObject != null && MersalAntiDeleteHelper.isDeleted(currentMessageObject.getDialogId(), currentMessageObject.getId())) {
+            currentTimeString = TextUtils.concat(getString(R.string.MersalDeletedBadge), currentTimeString);
         }
         timeTextWidth = timeWidth = (int) Math.ceil(Theme.chat_timePaint.measureText(currentTimeString, 0, currentTimeString == null ? 0 : currentTimeString.length()));
         if (currentMessageObject.scheduled && currentMessageObject.messageOwner.date == 0x7FFFFFFE || currentMessageObject.notime) {

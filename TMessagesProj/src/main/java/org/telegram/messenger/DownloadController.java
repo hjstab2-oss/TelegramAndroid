@@ -264,9 +264,24 @@ public class DownloadController extends BaseController implements NotificationCe
     public DownloadController(int instance) {
         super(instance);
         SharedPreferences preferences = MessagesController.getMainSettings(currentAccount);
-        String defaultLow = "1_1_1_1_1048576_512000_512000_524288_0_0_1_1_50_0";
-        String defaultMedium = "13_13_13_13_1048576_10485760_1048576_524288_1_1_1_0_100_1";
-        String defaultHigh = "13_13_13_13_1048576_15728640_3145728_524288_1_1_1_0_100_1";
+        String defaultLow = "0_0_0_0_0_0_0_0_0_0_1_1_50_0";
+        String defaultMedium = "0_0_0_0_0_0_0_0_0_0_1_0_100_0";
+        String defaultHigh = "1_1_1_1_1048576_0_0_0_0_0_1_0_100_0";
+        if (!preferences.contains("mersal_autodownload_init")) {
+            preferences.edit()
+                    .putBoolean("mersal_autodownload_init", true)
+                    .putString("preset0", defaultLow)
+                    .putString("preset1", defaultMedium)
+                    .putString("preset2", defaultHigh)
+                    .putString("mobilePreset", defaultMedium)
+                    .putString("wifiPreset", defaultHigh)
+                    .putString("roamingPreset", defaultLow)
+                    .putInt("currentMobilePreset", 3)
+                    .putInt("currentWifiPreset", 3)
+                    .putInt("currentRoamingPreset", 3)
+                    .putBoolean("newConfig", true)
+                    .commit();
+        }
         lowPreset = new Preset(preferences.getString("preset0", defaultLow), defaultLow);
         lowPreset.preloadStories = false;
         mediumPreset = new Preset(preferences.getString("preset1", defaultMedium), defaultMedium);
@@ -293,9 +308,9 @@ public class DownloadController extends BaseController implements NotificationCe
             for (int a = 0; a < 4; a++) {
                 String key = "mobileDataDownloadMask" + (a == 0 ? "" : a);
                 if (a == 0 || preferences.contains(key)) {
-                    mobileDataDownloadMask[a] = preferences.getInt(key, AUTODOWNLOAD_TYPE_PHOTO | AUTODOWNLOAD_TYPE_VIDEO | AUTODOWNLOAD_TYPE_DOCUMENT);
-                    wifiDownloadMask[a] = preferences.getInt("wifiDownloadMask" + (a == 0 ? "" : a), AUTODOWNLOAD_TYPE_PHOTO | AUTODOWNLOAD_TYPE_VIDEO | AUTODOWNLOAD_TYPE_DOCUMENT);
-                    roamingDownloadMask[a] = preferences.getInt("roamingDownloadMask" + (a == 0 ? "" : a), AUTODOWNLOAD_TYPE_PHOTO);
+                    mobileDataDownloadMask[a] = preferences.getInt(key, 0);
+                    wifiDownloadMask[a] = preferences.getInt("wifiDownloadMask" + (a == 0 ? "" : a), AUTODOWNLOAD_TYPE_PHOTO);
+                    roamingDownloadMask[a] = preferences.getInt("roamingDownloadMask" + (a == 0 ? "" : a), 0);
                 } else {
                     mobileDataDownloadMask[a] = mobileDataDownloadMask[0];
                     wifiDownloadMask[a] = wifiDownloadMask[0];
@@ -370,6 +385,25 @@ public class DownloadController extends BaseController implements NotificationCe
                 lowPreset.preloadStories = false;
                 mediumPreset.set(res.medium);
                 highPreset.set(res.high);
+                for (Preset p : new Preset[]{lowPreset, mediumPreset, highPreset}) {
+                    for (int a = 0; a < p.mask.length; a++) {
+                        p.mask[a] &= ~(AUTODOWNLOAD_TYPE_VIDEO | AUTODOWNLOAD_TYPE_DOCUMENT);
+                    }
+                    p.preloadVideo = false;
+                    p.preloadStories = false;
+                }
+                lowPreset.sizes[PRESET_SIZE_NUM_PHOTO] = 0;
+                for (int a = 0; a < lowPreset.mask.length; a++) {
+                    lowPreset.mask[a] = 0;
+                }
+                for (int a = 0; a < mediumPreset.mask.length; a++) {
+                    mediumPreset.mask[a] = 0;
+                }
+                mediumPreset.sizes[PRESET_SIZE_NUM_PHOTO] = 0;
+                for (int a = 0; a < highPreset.mask.length; a++) {
+                    highPreset.mask[a] = AUTODOWNLOAD_TYPE_PHOTO;
+                }
+                highPreset.sizes[PRESET_SIZE_NUM_PHOTO] = 1024 * 1024;
                 for (int a = 0; a < 3; a++) {
                     Preset preset;
                     if (a == 0) {
@@ -380,12 +414,11 @@ public class DownloadController extends BaseController implements NotificationCe
                         preset = roamingPreset;
                     }
                     if (preset.equals(lowPreset)) {
-                        preset.set(res.low);
-                        preset.preloadStories = false;
+                        preset.set(lowPreset);
                     } else if (preset.equals(mediumPreset)) {
-                        preset.set(res.medium);
+                        preset.set(mediumPreset);
                     } else if (preset.equals(highPreset)) {
-                        preset.set(res.high);
+                        preset.set(highPreset);
                     }
                 }
 

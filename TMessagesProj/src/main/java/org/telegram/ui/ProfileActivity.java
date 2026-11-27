@@ -11075,20 +11075,20 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     forkCheckUpdateRow = rowCount++;
                 }
                 forkSectionCell = rowCount++;
-                if (!getMessagesController().premiumFeaturesBlocked()) {
+                // Mersal: hide Premium, Stars, TON, Business, Send a Gift rows
+                if (false && !getMessagesController().premiumFeaturesBlocked()) {
                     premiumRow = rowCount++;
                 }
-                if (getMessagesController().starsPurchaseAvailable()) {
+                if (false && getMessagesController().starsPurchaseAvailable()) {
                     starsRow = rowCount++;
                 }
-                StarsController.getInstance(currentAccount, true).getBalance();
-                if (ApplicationLoader.isBetaBuild() || ApplicationLoader.isStandaloneBuild() || ApplicationLoader.isHuaweiStoreBuild() || (StarsController.getInstance(currentAccount, true).balanceAvailable() && (StarsController.getInstance(currentAccount, true).hasTransactions() || StarsController.getInstance(currentAccount, true).getBalance().positive()))) {
+                if (false) {
                     tonRow = rowCount++;
                 }
-                if (!getMessagesController().premiumFeaturesBlocked()) {
+                if (false && !getMessagesController().premiumFeaturesBlocked()) {
                     businessRow = rowCount++;
                 }
-                if (!getMessagesController().premiumPurchaseBlocked()) {
+                if (false && !getMessagesController().premiumPurchaseBlocked()) {
                     premiumGiftingRow = rowCount++;
                 }
                 if (premiumRow >= 0 || starsRow >= 0 || tonRow >= 0 || businessRow >= 0 || premiumGiftingRow >= 0) {
@@ -11158,7 +11158,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (actionsView == null && userId != getUserConfig().getClientUserId()) {
                     notificationsRow = rowCount++;
                 }
-                if (isBot && user != null && user.bot_has_main_app) {
+                if (false && isBot && user != null && user.bot_has_main_app) {
                     botAppRow = rowCount++;
                 }
                 infoEndRow = rowCount - 1;
@@ -12523,7 +12523,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     otherItem.addSubItem(delete_contact, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteContact));
                 }
                 if (!UserObject.isDeleted(user) && !isBot && currentEncryptedChat == null && !userBlocked && userId != 333000 && userId != 777000 && userId != 42777) {
-                    if (!BuildVars.IS_BILLING_UNAVAILABLE && !user.self && !user.bot && !MessagesController.isSupportUser(user) && !getMessagesController().premiumPurchaseBlocked()) {
+                    if (false && !BuildVars.IS_BILLING_UNAVAILABLE && !user.self && !user.bot && !MessagesController.isSupportUser(user) && !getMessagesController().premiumPurchaseBlocked()) {
                         StarsController.getInstance(currentAccount).loadStarGifts();
                         otherItem.addSubItem(gift_premium, R.drawable.msg_gift_premium, LocaleController.getString(R.string.ProfileSendAGift));
                         giftAction = true;
@@ -12615,7 +12615,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         otherItem.addSubItem(share, R.drawable.msg_share, LocaleController.getString(R.string.BotShare));
                         shareAction = !chat.creator;
                     }
-                    if (!BuildVars.IS_BILLING_UNAVAILABLE && !getMessagesController().premiumPurchaseBlocked()) {
+                    if (false && !BuildVars.IS_BILLING_UNAVAILABLE && !getMessagesController().premiumPurchaseBlocked()) {
                         StarsController.getInstance(currentAccount).loadStarGifts();
                         otherItem.addSubItem(gift_premium, R.drawable.msg_gift_premium, LocaleController.getString(R.string.ProfileSendAGiftToChannel));
                         otherItem.setSubItemShown(gift_premium, chatInfo != null && chatInfo.stargifts_available);

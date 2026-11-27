@@ -8163,6 +8163,18 @@ public class Theme {
             chat_msgTextPaintTwoEmoji.setTextSize(dp(24 + 14));
             chat_msgTextPaintThreeEmoji.setTextSize(dp(20 + 10));
             chat_msgTextPaint.setTextSize(dp(SharedConfig.fontSize));
+            Typeface bodyTypeface = AndroidUtilities.getTypeface("fonts/rregular.ttf");
+            if (bodyTypeface != null) {
+                chat_msgTextPaint.setTypeface(bodyTypeface);
+                chat_replyTextPaint.setTypeface(bodyTypeface);
+                chat_quoteTextPaint.setTypeface(bodyTypeface);
+                chat_explanationTextPaint.setTypeface(bodyTypeface);
+                chat_timePaint.setTypeface(bodyTypeface);
+            }
+            chat_msgBotButtonPaint.setTypeface(AndroidUtilities.bold());
+            chat_namePaint.setTypeface(AndroidUtilities.bold());
+            chat_replyNamePaint.setTypeface(AndroidUtilities.bold());
+            chat_topicTextPaint.setTypeface(AndroidUtilities.bold());
             chat_msgGameTextPaint.setTextSize(dp(14));
             chat_msgBotButtonPaint.setTextSize(dp(15));
             float smallerDp = (2 * SharedConfig.fontSize + 10) / 3f; // 6f + SharedConfig.fontSize / 2f;
@@ -8179,6 +8191,49 @@ public class Theme {
             chat_msgTextCodePaint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 1), SharedConfig.fontSize - 2)));
             chat_msgTextCode2Paint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 2), SharedConfig.fontSize - 3)));
             chat_msgTextCode3Paint.setTextSize(dp(Math.max(Math.min(10, SharedConfig.fontSize - 2), SharedConfig.fontSize - 5)));
+        }
+    }
+
+    public static void refreshTypefaces() {
+        synchronized (sync) {
+            Typeface regular = AndroidUtilities.getTypeface("fonts/rregular.ttf");
+            Typeface bold = AndroidUtilities.bold();
+            if (chat_msgTextPaint != null && regular != null) {
+                chat_msgTextPaint.setTypeface(regular);
+            }
+            if (chat_msgBotButtonPaint != null && bold != null) {
+                chat_msgBotButtonPaint.setTypeface(bold);
+            }
+            if (chat_namePaint != null && bold != null) {
+                chat_namePaint.setTypeface(bold);
+            }
+            if (chat_replyNamePaint != null && bold != null) {
+                chat_replyNamePaint.setTypeface(bold);
+            }
+            if (chat_replyTextPaint != null && regular != null) {
+                chat_replyTextPaint.setTypeface(regular);
+            }
+            if (chat_quoteTextPaint != null && regular != null) {
+                chat_quoteTextPaint.setTypeface(regular);
+            }
+            if (chat_explanationTextPaint != null && regular != null) {
+                chat_explanationTextPaint.setTypeface(regular);
+            }
+            if (chat_topicTextPaint != null && bold != null) {
+                chat_topicTextPaint.setTypeface(bold);
+            }
+            if (chat_timePaint != null && regular != null) {
+                chat_timePaint.setTypeface(regular);
+            }
+            if (chat_infoPaint != null && regular != null) {
+                chat_infoPaint.setTypeface(regular);
+            }
+            if (chat_infoBoldPaint != null && bold != null) {
+                chat_infoBoldPaint.setTypeface(bold);
+            }
+            if (chat_botButtonPaint != null && bold != null) {
+                chat_botButtonPaint.setTypeface(bold);
+            }
         }
     }
 

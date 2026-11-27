@@ -148,6 +148,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import org.telegram.messenger.MersalConfig;
 
 public class GiftSheet extends BottomSheetWithRecyclerListView implements NotificationCenter.NotificationCenterDelegate {
 
@@ -705,6 +706,12 @@ public class GiftSheet extends BottomSheetWithRecyclerListView implements Notifi
 
     @Override
     public void show() {
+        // Mersal: suppress Gift upsell sheets
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public void showUnused() {
         if (MessagesController.getInstance(currentAccount).isFrozen()) {
             AccountFrozenAlert.show(currentAccount);
             return;

@@ -32,6 +32,7 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
+import org.telegram.messenger.MersalConfig;
 
 public class FileLoadOperation {
 
@@ -299,7 +300,11 @@ public class FileLoadOperation {
     }
 
     private void updateParams() {
-        if ((preloadPrefixSize > 0 || MessagesController.getInstance(currentAccount).getfileExperimentalParams) && !forceSmallChunk) {
+        if (MersalConfig.isDownloadBoostEnabled() && !forceSmallChunk && !isStory) {
+            downloadChunkSizeBig = 1024 * 512;
+            maxDownloadRequests = 8;
+            maxDownloadRequestsBig = 8;
+        } else if ((preloadPrefixSize > 0 || MessagesController.getInstance(currentAccount).getfileExperimentalParams) && !forceSmallChunk) {
             downloadChunkSizeBig = 1024 * 512;
             maxDownloadRequests = 8;
             maxDownloadRequestsBig = 8;

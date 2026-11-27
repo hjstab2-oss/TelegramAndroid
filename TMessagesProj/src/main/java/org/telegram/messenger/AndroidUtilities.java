@@ -240,6 +240,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import me.vkryl.core.BitwiseUtils;
+import org.telegram.messenger.MersalConfig;
 
 public class AndroidUtilities {
     public final static int REPLACING_TAG_TYPE_LINK = 0;
@@ -260,13 +261,22 @@ public class AndroidUtilities {
 
     public static Typeface bold() {
         if (mediumTypeface == null) {
-            if (SharedConfig.useSystemBoldFont && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (!MersalConfig.isIbmPlexFontEnabled()) {
+                mediumTypeface = Typeface.DEFAULT_BOLD;
+            } else if (SharedConfig.useSystemBoldFont && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 mediumTypeface = Typeface.create(null, 500, false);
             } else {
                 mediumTypeface = getTypeface(TYPEFACE_ROBOTO_MEDIUM);
             }
         }
         return mediumTypeface;
+    }
+
+    public static void clearMersalTypefaces() {
+        synchronized (typefaceCache) {
+            typefaceCache.clear();
+        }
+        mediumTypeface = null;
     }
 
     private static final Hashtable<String, Typeface> typefaceCache = new Hashtable<>();
@@ -2518,6 +2528,36 @@ public class AndroidUtilities {
     }
 
     public static Typeface getTypeface(String assetPath) {
+        if (assetPath == null) {
+            return null;
+        }
+        final boolean isUiFont = "fonts/rregular.ttf".equals(assetPath)
+                || "fonts/rmedium.ttf".equals(assetPath)
+                || "fonts/rbold.ttf".equals(assetPath)
+                || "fonts/ritalic.ttf".equals(assetPath)
+                || "fonts/rmediumitalic.ttf".equals(assetPath)
+                || "fonts/rcondensedbold.ttf".equals(assetPath)
+                || "fonts/rextrabold.ttf".equals(assetPath);
+        if (isUiFont) {
+            if (!MersalConfig.isIbmPlexFontEnabled()) {
+                if (assetPath.contains("bold") || assetPath.contains("medium")) {
+                    return assetPath.contains("italic")
+                            ? Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC)
+                            : Typeface.DEFAULT_BOLD;
+                }
+                if (assetPath.contains("italic")) {
+                    return Typeface.create(Typeface.DEFAULT, Typeface.ITALIC);
+                }
+                return Typeface.DEFAULT;
+            }
+            if ("fonts/rbold.ttf".equals(assetPath) || "fonts/rcondensedbold.ttf".equals(assetPath) || "fonts/rextrabold.ttf".equals(assetPath)) {
+                assetPath = "fonts/IBMPlexSansArabic-Bold.ttf";
+            } else if ("fonts/rmedium.ttf".equals(assetPath) || "fonts/rmediumitalic.ttf".equals(assetPath)) {
+                assetPath = "fonts/IBMPlexSansArabic-Medium.ttf";
+            } else {
+                assetPath = "fonts/IBMPlexSansArabic-Regular.ttf";
+            }
+        }
         synchronized (typefaceCache) {
             if (!typefaceCache.containsKey(assetPath)) {
                 try {
@@ -2527,7 +2567,10 @@ public class AndroidUtilities {
                         if (assetPath.contains("rextrabold")) {
                             builder.setWeight(800);
                         }
-                        if (assetPath.contains("medium") || assetPath.contains("rbold")) {
+                        if (assetPath.contains("medium") || assetPath.contains("rbold") || assetPath.contains("Medium")) {
+                            builder.setWeight(700);
+                        }
+                        if (assetPath.contains("Bold")) {
                             builder.setWeight(700);
                         }
                         if (assetPath.contains("italic")) {

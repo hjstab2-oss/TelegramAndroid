@@ -65,6 +65,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.SimpleFloatPropertyCompat;
 import org.telegram.ui.ReportBottomSheet;
 import org.telegram.ui.web.BotWebViewContainer;
+import org.telegram.messenger.MersalConfig;
 
 public class ChatAttachAlertBotWebViewLayout extends ChatAttachAlert.AttachAlertLayout implements NotificationCenter.NotificationCenterDelegate {
     private final static int POLL_PERIOD = 60000;
@@ -492,6 +493,12 @@ public class ChatAttachAlertBotWebViewLayout extends ChatAttachAlert.AttachAlert
     }
 
     public void requestWebView(int currentAccount, long peerId, long botId, boolean silent, int replyToMsgId, String startCommand, long monoforumTopicId) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public void requestWebViewUnused(int currentAccount, long peerId, long botId, boolean silent, int replyToMsgId, String startCommand, long monoforumTopicId) {
         this.currentAccount = currentAccount;
         this.peerId = peerId;
         this.botId = botId;

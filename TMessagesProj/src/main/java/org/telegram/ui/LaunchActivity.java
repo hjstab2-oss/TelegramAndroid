@@ -270,6 +270,7 @@ import java.util.zip.ZipInputStream;
 import java.util.HashSet;
 
 import tw.nekomimi.nekogram.helpers.MonetHelper;
+import org.telegram.messenger.MersalConfig;
 
 public class LaunchActivity extends BasePermissionsActivity implements INavigationLayout.INavigationLayoutDelegate, NotificationCenter.NotificationCenterDelegate, DialogsActivity.DialogsActivityDelegate {
     public final static String EXTRA_FORCE_NOT_INTERNAL_APPS = "force_not_internal_apps";
@@ -891,6 +892,12 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private Object onBackInvokedCallback;
 
     public static void showAttachMenuBot(LaunchActivity launchActivity, int currentAccount, TLRPC.TL_attachMenuBot attachMenuBot, String startApp, boolean sidemenu) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public static void showAttachMenuBotUnused(LaunchActivity launchActivity, int currentAccount, TLRPC.TL_attachMenuBot attachMenuBot, String startApp, boolean sidemenu) {
         BaseFragment lastFragment = getLastFragment();
         if (lastFragment == null) return;
         WebViewRequestProps props = WebViewRequestProps.of(currentAccount, attachMenuBot.bot_id, attachMenuBot.bot_id, attachMenuBot.short_name, null, BotWebViewAttachedSheet.TYPE_SIMPLE_WEB_VIEW_BUTTON, 0, 0L, false, null, false, startApp, null, BotWebViewSheet.FLAG_FROM_SIDE_MENU, false, false);
@@ -5801,7 +5808,100 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         String referrer,
         boolean openDirect
     ) {
-        final TLRPC.TL_messages_getBotApp getBotApp = new TLRPC.TL_messages_getBotApp();
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        if (progress != null) {
+            progress.end();
+        }
+        try {
+            dismissLoading.run();
+        } catch (Exception ignore) {}
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    private void unusedRunBotApp(
+        final int intentAccount,
+        final String botAppMaybe,
+        final String botAppStartParam,
+        final Browser.Progress progress,
+        final Runnable dismissLoading,
+        final TLRPC.User user,
+        final boolean botCompact,
+        final boolean botFullscreen,
+        final boolean openedTelegram,
+        final boolean forceNotInternalForApps,
+        final boolean ignoreInactive,
+        final boolean botAttachable
+    ) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        if (dismissLoading != null) {
+            try {
+                dismissLoading.run();
+            } catch (Exception ignore) {}
+        }
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    private void handleBotAppUnused(
+        final int intentAccount,
+        final String username,
+        final String group,
+        final String sticker,
+        final String emoji,
+        final String botUser,
+        final String botChat,
+        final String botChannel,
+        final TLRPC.TL_chatAdminRights botChatAdminParams,
+        final String message,
+        final String contactToken,
+        final String folderSlug,
+        final String text,
+        final boolean hasUrl,
+        final Integer messageId,
+        final Long channelId,
+        final Integer threadId,
+        final Integer commentId,
+        final String game,
+        final String auth,
+        final String lang,
+        final String unsupportedUrl,
+        final String code,
+        final String loginToken,
+        final String wallPaper,
+        final String inputInvoiceSlug,
+        final String uniqueGiftSlug,
+        final String theme,
+        final boolean voicechat,
+        final boolean videochat,
+        final boolean livestream,
+        final String state,
+        final int videoTimestamp,
+        final boolean setAsAttachBot,
+        final String attachMenuBotToOpen,
+        final String attachMenuBotChoose,
+        final String botAppMaybe,
+        final String botAppStartParam,
+        final Browser.Progress progress,
+        final boolean forceNotInternalForApps,
+        final int storyId,
+        boolean liveStory,
+        final int storyAlbumId,
+        final int giftCollectionId,
+        final boolean isBoost,
+        final String chatLinkSlug,
+        TLRPC.User user,
+        Runnable dismissLoading,
+        boolean botAttachable,
+        boolean ignoreInactive,
+        boolean botCompact,
+        boolean botFullscreen,
+        boolean openedTelegram,
+        boolean openProfile,
+        boolean forceRequest,
+        String referrer,
+        boolean openDirect
+    ) {
         final TLRPC.TL_inputBotAppShortName app = new TLRPC.TL_inputBotAppShortName();
         app.bot_id = MessagesController.getInstance(intentAccount).getInputUser(user);
         app.short_name = botAppMaybe;

@@ -232,6 +232,7 @@ import java.util.Locale;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
+import org.telegram.messenger.MersalConfig;
 
 public class ChatActivityEnterView extends FrameLayout implements
     NotificationCenter.NotificationCenterDelegate,
@@ -11485,22 +11486,17 @@ public class ChatActivityEnterView extends FrameLayout implements
             ) &&
             parentFragment != null && parentFragment.getChatMode() == 0;
 
+        visible = false;
         if (!visible && birthdayHint != null) {
             birthdayHint.hide();
         }
         if (!visible && giftButton == null) {
             return;
         }
-        createGiftButton();
-
-        AndroidUtilities.updateViewVisibilityAnimated(giftButton, visible, 1f, true, 1f, animated, a -> {
-            if (scheduledButton != null) {
-                scheduledButton.setTranslationX(scheduledButton.getTranslationX());
-            }
-        });
-        if (visible) {
-            checkBirthdayHint();
+        if (giftButton != null) {
+            giftButton.setVisibility(GONE);
         }
+        return;
     }
 
     private void checkBirthdayHint() {
@@ -11812,7 +11808,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     public boolean hasBotWebView() {
-        return botMenuButtonType == BotMenuButtonType.WEB_VIEW;
+        return false;
     }
 
     private void updateBotButton(boolean animated) {
@@ -11822,8 +11818,8 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (parentFragment != null && !parentFragment.openAnimationEnded) {
             animated = false;
         }
-        boolean hasBotWebView = hasBotWebView();
-        boolean canShowBotsMenu = botMenuButtonType != BotMenuButtonType.NO_BUTTON && dialog_id > 0;
+        boolean hasBotWebView = false;
+        boolean canShowBotsMenu = botMenuButtonType == BotMenuButtonType.COMMANDS && dialog_id > 0;
         boolean wasVisible = botButton != null && botButton.getVisibility() == VISIBLE;
         if (hasBotWebView || hasBotCommands || hasQuickReplies || botReplyMarkup != null) {
             if (botReplyMarkup != null) {
@@ -12042,6 +12038,12 @@ public class ChatActivityEnterView extends FrameLayout implements
             parentFragment.openPollCreate((typeRequestPoll.flags & 1) != 0 ? typeRequestPoll.quiz : null);
             return false;
         } else if (TLKeyboardHelper.isButtonWebView(button)) {
+            org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+            return false;
+        } else if (TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeGame.class)) {
+            org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+            return false;
+        } else if (false && TLKeyboardHelper.isButtonWebView(button)) {
             long botId = messageObject.messageOwner.via_bot_id != 0 ? messageObject.messageOwner.via_bot_id : messageObject.messageOwner.from_id.user_id;
             TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(botId);
             Runnable onRequestWebView = new Runnable() {
@@ -12101,7 +12103,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             });
             builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
             parentFragment.showDialog(builder.create());
-        } else if (TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeCallback.class) || TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeGame.class) || TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeBuy.class) || TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeUrlAuth.class)) {
+        } else if (TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeCallback.class) || TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeBuy.class) || TLKeyboardHelper.isType(button, TL_keyboard.TL_inlineButtonTypeUrlAuth.class)) {
             SendMessagesHelper.getInstance(currentAccount).sendCallback(true, messageObject, button, parentFragment);
         } else if (buttonTypeSwitchInline != null) {
             if (parentFragment.processSwitchButton(buttonTypeSwitchInline)) {

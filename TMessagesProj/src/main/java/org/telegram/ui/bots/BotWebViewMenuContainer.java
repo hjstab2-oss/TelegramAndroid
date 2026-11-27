@@ -77,6 +77,7 @@ import org.telegram.ui.web.BotWebViewContainer;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import org.telegram.messenger.MersalConfig;
 
 public class BotWebViewMenuContainer extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, BottomSheetTabsOverlay.Sheet, BottomSheetTabsOverlay.SheetView, Theme.Colorable {
     private final static int POLL_PERIOD = 60000;
@@ -950,6 +951,12 @@ public class BotWebViewMenuContainer extends FrameLayout implements Notification
     }
 
     private void loadWebView() {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    private void loadWebViewUnused() {
 //        if (loadedResponse != null) {
 //            processResponse(loadedResponse);
 //            return;

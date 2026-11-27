@@ -115,6 +115,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.telegram.messenger.MersalConfig;
 
 public class BotWebViewSheet extends Dialog implements NotificationCenter.NotificationCenterDelegate, BottomSheetTabsOverlay.Sheet {
     public final static int TYPE_WEB_VIEW_BUTTON = 0,
@@ -1432,6 +1433,12 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
     }
 
     public void requestWebView(BaseFragment fragment, WebViewRequestProps props) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public void requestWebViewUnused(BaseFragment fragment, WebViewRequestProps props) {
         this.requestProps = props;
         this.currentAccount = props.currentAccount;
         this.peerId = props.peerId;
@@ -2104,6 +2111,11 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
 
     @Override
     public void show() {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    public void showUnused() {
         if (!AndroidUtilities.isSafeToShow(getContext())) return;
         setOpen(true);
         windowView.setAlpha(0f);

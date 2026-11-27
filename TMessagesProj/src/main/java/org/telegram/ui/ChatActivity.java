@@ -389,6 +389,7 @@ import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
 import me.vkryl.core.BitwiseUtils;
 import me.vkryl.core.reference.ReferenceList;
+import org.telegram.messenger.MersalConfig;
 
 @SuppressWarnings("unchecked")
 public class ChatActivity extends BaseFragment implements
@@ -13532,32 +13533,8 @@ public class ChatActivity extends BaseFragment implements
     private boolean approved;
     public void processInlineBotWebView(TLRPC.TL_inlineBotWebView object) {
         final Runnable open = () -> {
-            final TLRPC.User bot = mentionContainer.getAdapter().getFoundContextBot();
-            final WebViewRequestProps props = WebViewRequestProps.of(currentAccount, currentUser != null ? currentUser.id : currentChat.id, bot.id, object.text, object.url, BotWebViewSheet.TYPE_SIMPLE_WEB_VIEW_BUTTON, 0, getSendMonoForumPeerId(), false, null, false, null, null, BotWebViewSheet.FLAG_FROM_INLINE_SWITCH, false, false);
-            if (LaunchActivity.instance != null && LaunchActivity.instance.getBottomSheetTabs() != null && LaunchActivity.instance.getBottomSheetTabs().tryReopenTab(props) != null) {
-                return;
-            }
-            final String restriction_reason = bot == null ? null : MessagesController.getInstance(currentAccount).getRestrictionReason(bot.restriction_reason);
-            if (!TextUtils.isEmpty(restriction_reason)) {
-                MessagesController.getInstance(currentAccount).showCantOpenAlert(this, restriction_reason);
-                return;
-            }
-//            if (AndroidUtilities.isTablet() || true) {
-                BotWebViewSheet webViewSheet = new BotWebViewSheet(getContext(), getResourceProvider());
-                webViewSheet.setDefaultFullsize(false);
-                webViewSheet.setNeedsContext(true);
-                webViewSheet.setParentActivity(getParentActivity());
-                webViewSheet.requestWebView(ChatActivity.this, props);
-                webViewSheet.show();
-//            } else {
-//                BotWebViewAttachedSheet webViewSheet = createBotViewer();
-//                webViewSheet.setDefaultFullsize(false);
-//                webViewSheet.setNeedsContext(true);
-//                webViewSheet.setParentActivity(getParentActivity());
-//                webViewSheet.requestWebView(ChatActivity.this, props);
-//                webViewSheet.show();
-//            }
-
+            org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+            return;
         };
         if (approved) {
             open.run();
@@ -23786,6 +23763,8 @@ public class ChatActivity extends BaseFragment implements
             if ((updateMask & MessagesController.UPDATE_MASK_AVATAR) != 0 || (updateMask & MessagesController.UPDATE_MASK_CHAT_AVATAR) != 0 || (updateMask & MessagesController.UPDATE_MASK_NAME) != 0) {
                 checkAndUpdateAvatar();
                 updateVisibleRows();
+            } else if ((updateMask & MessagesController.UPDATE_MASK_MESSAGE_TEXT) != 0) {
+                updateVisibleRows();
             }
             if ((updateMask & MessagesController.UPDATE_MASK_USER_PRINT) != 0) {
                 updateSubtitle = true;
@@ -26794,6 +26773,12 @@ public class ChatActivity extends BaseFragment implements
     private Pattern sponsoredUrlPattern;
     private MessageObject botSponsoredMessage;
     private void addSponsoredMessages(boolean animated) {
+        // Mersal: never fetch or render channel/bot sponsored messages
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    private void addSponsoredMessagesUnused(boolean animated) {
         if (sponsoredMessagesAdded || chatMode != 0 || !ChatObject.isChannel(currentChat) && !UserObject.isBot(currentUser) || !forwardEndReached[0] || getUserConfig().isPremium() && getMessagesController().isSponsoredDisabled() || isReport()) {
             return;
         }
@@ -37783,6 +37768,12 @@ public class ChatActivity extends BaseFragment implements
     }
 
     public void showOpenGameAlert(final TLRPC.TL_game game, final MessageObject messageObject, final String urlStr, boolean ask, final long uid) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public void showOpenGameAlertUnused(final TLRPC.TL_game game, final MessageObject messageObject, final String urlStr, boolean ask, final long uid) {
         TLRPC.User user = getMessagesController().getUser(uid);
         if (ask) {
             AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), themeDelegate);

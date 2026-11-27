@@ -217,12 +217,18 @@ public class StoriesController {
     }
 
     private void fixDeletedAndNonContactsStories(ArrayList<TL_stories.PeerStories> list) {
+        MessagesController messagesController = MessagesController.getInstance(currentAccount);
         for (int k = 0; k < list.size(); k++) {
             TL_stories.PeerStories userStories = list.get(k);
             long dialogId = DialogObject.getPeerDialogId(userStories.peer);
             boolean removed = false;
+            if (dialogId == 0 || messagesController.isPromoDialog(dialogId, false) || !messagesController.isAllowedLocalDialog(dialogId)) {
+                list.remove(k);
+                k--;
+                continue;
+            }
             if (dialogId > 0) {
-                TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(dialogId);
+                TLRPC.User user = messagesController.getUser(dialogId);
                 if (user != null && !isContactOrService(user)) {
                     list.remove(k);
                     k--;
@@ -468,6 +474,12 @@ public class StoriesController {
         for (int i = 0; i < storiesResponse.peer_stories.size(); i++) {
             TL_stories.PeerStories userStories = storiesResponse.peer_stories.get(i);
             final long dialogId = DialogObject.getPeerDialogId(userStories.peer);
+            if (dialogId == 0
+                    || MessagesController.getInstance(currentAccount).isPromoDialog(dialogId, false)
+                    || !MessagesController.getInstance(currentAccount).isAllowedLocalDialog(dialogId)) {
+                allStoriesMap.remove(dialogId);
+                continue;
+            }
             for (int j = 0; j < userStories.stories.size(); j++) {
                 TL_stories.StoryItem story = userStories.stories.get(j);
                 if (story instanceof TL_stories.TL_storyItemDeleted ||

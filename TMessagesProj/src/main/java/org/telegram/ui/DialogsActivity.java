@@ -507,6 +507,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private ValueAnimator contactsAlphaAnimator;
     private ViewPage[] viewPages;
     private ActionBarMenuItem passcodeItem;
+    private ActionBarMenuItem proxyItem;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3341,6 +3342,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             doneItem.setAlpha(0.0f);
             doneItem.setVisibility(View.GONE);
             proxyDrawable = new ProxyDrawable(context);
+            proxyItem = menu.addItem(2, proxyDrawable);
+            proxyItem.setContentDescription(getString(R.string.ProxySettings));
+            proxyItem.setVisibility(View.VISIBLE);
+
             proxyMenuSubItem = new ActionBarMenuSubItem(context, false, true, resourceProvider);
             proxyMenuSubItem.setItemHeight(56);
             proxyMenuSubItem.setTextAndIcon(getString(R.string.MenuProxyTitle), 0, proxyDrawable);
@@ -4017,6 +4022,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     ((LaunchActivity) getParentActivity()).showPasscodeActivity(false, true, position[0] + passcodeItem.getMeasuredWidth() / 2, position[1] + passcodeItem.getMeasuredHeight() / 2, () -> passcodeItem.setAlpha(1.0f), () -> passcodeItem.setAlpha(0.0f));
                     getNotificationsController().showNotifications();
                     checkUi_itemPasscodeVisibility();
+                } else if (id == 2) {
+                    presentFragment(new ProxyListActivity());
                 } else if (id == 3) {
                     showSearch(true, true, true);
                     fragmentSearchFieldWatcher.toggleSearch(true);
@@ -10568,6 +10575,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         final boolean connected = currentConnectionState == ConnectionsManager.ConnectionStateConnected || currentConnectionState == ConnectionsManager.ConnectionStateUpdating;
         proxyMenuSubItem.setSubtext(getString(proxyEnabled ? (connected ? R.string.MenuProxyConnected : R.string.MenuProxyConnecting) : R.string.MenuProxyDisabled));
         proxyDrawable.setConnected(proxyEnabled, connected, animated);
+        if (proxyItem != null) {
+            proxyItem.setVisibility(View.VISIBLE);
+        }
+        checkUi_itemProxyVisibility();
     }
 
     private AnimatorSet doneItemAnimator;
@@ -14142,9 +14153,20 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         checkUi_itemBackButtonVisibility();
         checkUi_itemOptionsVisibility();
         checkUi_itemDownloadsVisibility();
+        checkUi_itemProxyVisibility();
         checkUi_itemSpeedVisibility();
         checkUi_itemPasscodeVisibility();
         checkUi_itemSearchVisibility();
+    }
+
+    private void checkUi_itemProxyVisibility() {
+        if (proxyItem == null) {
+            return;
+        }
+        proxyItem.setVisibility(View.VISIBLE);
+        // Mersal: always show proxy shield icon regardless of search/done state
+        final float factor = 1f;
+        FragmentFloatingButton.setAnimatedVisibility(proxyItem, factor);
     }
 
     private void checkUi_itemBackButtonVisibility() {

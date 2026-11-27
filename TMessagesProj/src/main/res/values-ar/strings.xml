@@ -1560,4 +1560,25 @@
     <string name="QuickAttachNewestFirst">أحدث الصور على اليسار</string>
     <string name="QuickAttachNewestFirstInfo">عند الإيقاف، تُرتَّب الصور الأخيرة من الأقدم إلى الأحدث، من اليسار إلى اليمين.</string>
     <string name="PhotoSent">تم إرسال الصورة</string>
+
+    <string name="MersalSettingsTitle">إعدادات مرسال</string>
+    <string name="MersalSettingsSubtitle">الخصوصية، التسريع، الخطوط، وثيمات مرسال</string>
+    <string name="MersalSectionPrivacySpeed">الخصوصية والأداء</string>
+    <string name="MersalAntiDeleteTitle">حفظ الرسائل المحذوفة محلياً</string>
+    <string name="MersalAntiDeleteInfo">الاحتفاظ بالرسائل المحذوفة عن بُعد مع إظهار وسم «محذوفة» بجانب الوقت</string>
+    <string name="MersalDownloadBoostTitle">تسريع تحميل الملفات</string>
+    <string name="MersalDownloadBoostInfo">رفع عدد الاتصالات المتزامنة وحجم الأجزاء لتسريع التنزيل</string>
+    <string name="MersalSectionAppearance">المظهر والخطوط</string>
+    <string name="MersalFontModeTitle">نوع الخط</string>
+    <string name="MersalFontIbmPlex">IBM Plex Arabic</string>
+    <string name="MersalFontSystem">خط النظام</string>
+    <string name="MersalThemeModeTitle">ثيم Liquid Glass الاحترافي</string>
+    <string name="MersalThemeOnyxDark">🌙 Onyx Liquid Glass (ليلي زجاجي)</string>
+    <string name="MersalThemeCrystalLight">☀️ Crystal Liquid Glass (نهاري زجاجي)</string>
+    <string name="MersalThemeDefault">🎨 استخدام ثيمات التطبيق الافتراضية</string>
+    <string name="MersalSectionProtectionStatus">حالة الحماية النشطة</string>
+    <string name="MersalProtectionStatusTitle">الحماية القياسية لمرسال</string>
+    <string name="MersalProtectionStatusValue">نشط ومؤمّن</string>
+    <string name="MersalProtectionStatusInfo">البحث الخارجي مغلق • الإعلانات والبريميوم مخفية • الألعاب المصغرة محظورة</string>
+    <string name="MersalDeletedBadge">محذوفة • </string>
 </resources>

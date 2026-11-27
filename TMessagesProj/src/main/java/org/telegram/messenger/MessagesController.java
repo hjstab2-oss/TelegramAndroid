@@ -141,6 +141,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import me.vkryl.core.BitwiseUtils;
+import org.telegram.messenger.MersalAntiDeleteHelper;
+import org.telegram.messenger.MersalConfig;
 
 public class MessagesController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
 
@@ -1637,12 +1639,13 @@ public class MessagesController extends BaseController implements NotificationCe
         youtubePipType = mainPreferences.getString("youtubePipType", "disabled");
         keepAliveService = mainPreferences.getBoolean("keepAliveService", true);
         backgroundConnection = mainPreferences.getBoolean("backgroundConnection", true);
-        promoDialogId = mainPreferences.getLong("proxy_dialog", 0);
+        promoDialogId = 0;
+        promoDialog = null;
         nextPromoInfoCheckTime = mainPreferences.getInt("nextPromoInfoCheckTime", 0);
-        promoDialogType = mainPreferences.getInt("promo_dialog_type", 0);
-        promoPsaMessage = mainPreferences.getString("promo_psa_message", null);
-        promoPsaType = mainPreferences.getString("promo_psa_type", null);
-        proxyDialogAddress = mainPreferences.getString("proxyDialogAddress", null);
+        promoDialogType = 0;
+        promoPsaMessage = null;
+        promoPsaType = null;
+        proxyDialogAddress = null;
         gifSearchBot = mainPreferences.getString("gifSearchBot", "gif");
         imageSearchBot = mainPreferences.getString("imageSearchBot", "pic");
         blockedCountry = mainPreferences.getBoolean("blockedCountry", false);
@@ -2182,7 +2185,7 @@ public class MessagesController extends BaseController implements NotificationCe
                         continue;
                     }
                 }
-                if (promoDialogId != 0 && promoDialogId == d.id) {
+                if (false && promoDialogId != 0 && promoDialogId == d.id) {
                     promoDialog = d;
                 }
                 if (d.last_message_date == 0) {
@@ -9428,6 +9431,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 } else {
                     markDialogMessageAsDeleted(dialogId, messages);
                 }
+                MersalAntiDeleteHelper.unmarkDeleted(dialogId, messages);
                 getMessagesStorage().markMessagesAsDeleted(dialogId, messages, true, forAll, 0, topicId);
                 getMessagesStorage().updateDialogsWithDeletedMessages(dialogId, channelId, messages, null);
             }
@@ -10933,12 +10937,23 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public void checkPromoInfo(final boolean reset) {
-        Utilities.stageQueue.postRunnable(() -> checkPromoInfoInternal(reset));
+        // Mersal: suppress proxy sponsor channel & promo data
+        promoDialog = null;
+        promoDialogId = 0;
+        checkingPromoInfo = false;
     }
 
     private long lastCheckPromoInfoTime;
 
     private void checkPromoInfoInternal(boolean reset) {
+        promoDialog = null;
+        promoDialogId = 0;
+        checkingPromoInfo = false;
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    private void checkPromoInfoInternalUnused(boolean reset) {
         if (reset && checkingPromoInfo) {
             checkingPromoInfo = false;
         }
@@ -13557,7 +13572,7 @@ public class MessagesController extends BaseController implements NotificationCe
                         continue;
                     }
                 }
-                if (promoDialogId != 0 && promoDialogId == d.id) {
+                if (false && promoDialogId != 0 && promoDialogId == d.id) {
                     promoDialog = d;
                 }
                 if (d.last_message_date == 0) {
@@ -17693,6 +17708,17 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     protected void deleteMessagesByPush(long dialogId, ArrayList<Integer> ids, long channelId) {
+        if (MersalConfig.isAntiDeleteEnabled()) {
+            long targetDialogId = channelId != 0 ? -channelId : dialogId;
+            getMessagesStorage().markMessagesAsAntiDeleted(targetDialogId, ids);
+            AndroidUtilities.runOnUIThread(() -> {
+                if (targetDialogId != 0) {
+                    MersalAntiDeleteHelper.markDeleted(targetDialogId, ids);
+                }
+                getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, UPDATE_MASK_MESSAGE_TEXT);
+            });
+            return;
+        }
         getMessagesStorage().getStorageQueue().postRunnable(() -> {
             AndroidUtilities.runOnUIThread(() -> {
                 getNotificationCenter().postNotificationName(NotificationCenter.messagesDeleted, ids, channelId, false);
@@ -21265,10 +21291,28 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
             }
             if (deletedMessagesFinal != null) {
+                final boolean antiDelete = MersalConfig.isAntiDeleteEnabled();
                 for (int a = 0, size = deletedMessagesFinal.size(); a < size; a++) {
                     long dialogId = deletedMessagesFinal.keyAt(a);
                     ArrayList<Integer> arrayList = deletedMessagesFinal.valueAt(a);
                     if (arrayList == null) {
+                        continue;
+                    }
+                    if (antiDelete) {
+                        if (dialogId == 0) {
+                            for (int b = 0, size2 = arrayList.size(); b < size2; b++) {
+                                Integer id = arrayList.get(b);
+                                MessageObject obj = dialogMessagesByIds.get(id);
+                                if (obj != null) {
+                                    MersalAntiDeleteHelper.markDeleted(obj.getDialogId(), java.util.Collections.singletonList(id));
+                                } else {
+                                    MersalAntiDeleteHelper.markDeleted(0L, java.util.Collections.singletonList(id));
+                                }
+                            }
+                        } else {
+                            MersalAntiDeleteHelper.markDeleted(dialogId, arrayList);
+                        }
+                        updateMask |= UPDATE_MASK_MESSAGE_TEXT;
                         continue;
                     }
                     getNotificationCenter().postNotificationName(NotificationCenter.messagesDeleted, arrayList, -dialogId, false);
@@ -21385,9 +21429,14 @@ public class MessagesController extends BaseController implements NotificationCe
             }
         }
         if (deletedMessages != null) {
+            final boolean antiDelete = MersalConfig.isAntiDeleteEnabled();
             for (int a = 0, size = deletedMessages.size(); a < size; a++) {
                 long key = deletedMessages.keyAt(a);
                 ArrayList<Integer> arrayList = deletedMessages.valueAt(a);
+                if (antiDelete) {
+                    getMessagesStorage().markMessagesAsAntiDeleted(key, arrayList);
+                    continue;
+                }
                 getMessagesStorage().getStorageQueue().postRunnable(() -> {
                     ArrayList<Long> dialogIds = getMessagesStorage().markMessagesAsDeleted(key, arrayList, false, true, 0, 0);
                     getMessagesStorage().updateDialogsWithDeletedMessages(key, -key, arrayList, dialogIds);
@@ -21787,6 +21836,12 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public SponsoredMessagesInfo getSponsoredMessages(long dialogId) {
+        // Mersal: disable channel/bot sponsored messages
+        return null;
+    }
+
+    @SuppressWarnings("unused")
+    public SponsoredMessagesInfo getSponsoredMessagesUnused(long dialogId) {
         SponsoredMessagesInfo info = sponsoredMessages.get(dialogId);
         if (info != null && (info.loading || Math.abs(SystemClock.elapsedRealtime() - info.loadTime) <= 5 * 60 * 1000)) {
             return info;
@@ -22600,13 +22655,8 @@ public class MessagesController extends BaseController implements NotificationCe
         try {
             Collections.sort(allDialogs, dialogComparator);
         } catch (Exception e) {}
+        promoDialog = null;
         isLeftPromoChannel = true;
-        if (promoDialog != null && promoDialog.id < 0) {
-            TLRPC.Chat chat = getChat(-promoDialog.id);
-            if (chat != null && !chat.left) {
-                isLeftPromoChannel = false;
-            }
-        }
         for (int a = 0, N = allDialogs.size(); a < N; a++) {
             TLRPC.Dialog d = allDialogs.get(a);
             if (d instanceof TLRPC.TL_dialog) {
@@ -22708,7 +22758,7 @@ public class MessagesController extends BaseController implements NotificationCe
             }
 
         }
-        if (promoDialog != null && isLeftPromoChannel) {
+        if (false && promoDialog != null && isLeftPromoChannel) {
             allDialogs.add(0, promoDialog);
             addDialogToItsFolder(-2, promoDialog);
         }

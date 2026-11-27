@@ -101,6 +101,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.Locale;
+import org.telegram.messenger.MersalConfig;
 
 public class BotWebViewAttachedSheet implements NotificationCenter.NotificationCenterDelegate, BaseFragment.AttachedSheet, BottomSheetTabsOverlay.Sheet {
     public final static int
@@ -1002,6 +1003,12 @@ public class BotWebViewAttachedSheet implements NotificationCenter.NotificationC
     Drawable verifiedDrawable;
 
     public void requestWebView(BaseFragment fragment, WebViewRequestProps props) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    @SuppressWarnings("unused")
+    public void requestWebViewUnused(BaseFragment fragment, WebViewRequestProps props) {
         this.requestProps = props;
         this.currentAccount = props.currentAccount;
         this.peerId = props.peerId;
@@ -1424,6 +1431,11 @@ public class BotWebViewAttachedSheet implements NotificationCenter.NotificationC
         show(lowBounce, false);
     }
     public void show(boolean lowBounce, boolean instant) {
+        org.telegram.messenger.MersalConfig.showBlockedMiniAppToast();
+        return;
+    }
+
+    public void showUnused(boolean lowBounce, boolean instant) {
         if (!AndroidUtilities.isSafeToShow(getContext())) return;
 
         windowView.setAlpha(0f);
